@@ -1,7 +1,9 @@
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.144.0/three.module.min.js'
 import objects from "./objects.js"
+import {PointerLockControls} from "./plc.js"
+import lostControl from "./control.js"
 
-let scene, camera, renderer, light;
+let scene, camera, renderer, light, controls;
 let position = {x: 100, y: 10, z: 0}
 
 start3d();
@@ -12,7 +14,25 @@ function start3d(){
     createLight();
     fillScene();
     rendering();
+    control();
     animate();
+}
+
+function control(){
+    const menuPanel = document.getElementById('menuPanel')
+    const startButton = document.getElementById('startButton')
+    startButton.addEventListener(
+        'click',
+        function () {
+            controls.lock()
+        },
+        false
+    )
+    
+    controls = new PointerLockControls(camera, renderer.domElement)
+    controls.addEventListener('lock', () => (menuPanel.style.display = 'none'))
+    controls.addEventListener('unlock', () => (menuPanel.style.display = 'block'))
+    lostControl(controls)
 }
 
 function fillScene(){
@@ -29,10 +49,11 @@ function createLight(){
 
 function rendering(){
     try{
-        renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer = new THREE.WebGLRenderer();
 		renderer.setPixelRatio( window.devicePixelRatio );
 		renderer.setSize( window.innerWidth, window.innerHeight );
-		document.body.appendChild( renderer.domElement );
+        document.body.appendChild(renderer.domElement)
+
     }
     catch(e){
         console.log(e)
@@ -54,7 +75,7 @@ function createCamera(){
 function createScene(){
     try{
         scene = new THREE.Scene();
-        scene.background = new THREE.Color( 0x00000 );
+        scene.background = new THREE.Color( 0xfffff0 );
         scene.fog = new THREE.Fog( 0xffffff, 0, 750 );
     }catch(e){
         console.log(e)
@@ -64,3 +85,68 @@ function animate() {
     requestAnimationFrame( animate );
     renderer.render( scene, camera );
 }
+
+window.onresize = function(){
+    camera.aspect = window.innerWidth / window.innerHeight
+    camera.updateProjectionMatrix()
+    renderer.setSize(window.innerWidth, window.innerHeight)
+    animate()
+}
+
+
+const onKeyDown = function ( event ) {
+    switch ( event.code ) {
+        case 'ArrowUp':
+        case 'KeyW':
+            controls.moveForward(1)
+            break;
+
+        case 'ArrowLeft':
+        case 'KeyA':
+            controls.moveRight(-1)
+            break;
+
+        case 'ArrowDown':
+        case 'KeyS':
+            controls.moveForward(-1)
+            break;
+
+        case 'ArrowRight':
+        case 'KeyD':
+            controls.moveRight(1)
+            break;
+
+        case 'Space':
+            if ( canJump === true ) velocity.y += 350;
+            canJump = false;
+            break;
+
+    }
+};
+
+const onKeyUp = function ( event ) {
+    switch ( event.code ) {
+        case 'ArrowUp':
+        case 'KeyW':
+            controls.moveForward(0)
+            break;
+
+        case 'ArrowLeft':
+        case 'KeyA':
+            controls.moveRight(-1)
+            break;
+
+        case 'ArrowDown':
+        case 'KeyS':
+            controls.moveForward(-1)
+            break;
+
+        case 'ArrowRight':
+        case 'KeyD':
+            controls.moveRight(1)
+            break;
+    }
+};
+
+document.addEventListener( 'keydown', onKeyDown, false );
+document.addEventListener( 'keyup', onKeyUp );
